@@ -5,11 +5,12 @@ extern crate websocket;
 use crypto::digest::Digest;
 use crypto::sha2::Sha256;
 use serde_json::{json, Value};
+use std::io;
 use std::net::TcpStream;
 use std::sync::mpsc::{self, Receiver, Sender};
 use std::thread;
 use websocket::message::Message;
-use websocket::OwnedMessage::Text;
+use websocket::OwnedMessage::{Close, Text};
 use websocket::{receiver, sender, ClientBuilder};
 
 pub struct Obs {
@@ -20,13 +21,22 @@ pub struct Obs {
 }
 
 impl Obs {
-    pub fn connect(domain: &str, password: &str) -> Obs {
-        let client = ClientBuilder::new(domain)
-            .unwrap()
-            .connect_insecure()
-            .unwrap();
+    pub fn connect(domain: &str, password: &str) -> Result<Obs, &'static str> {
+        let mut cb = match ClientBuilder::new(domain) {
+            Ok(client) => client,
+            _ => return Err("Problem creating client"),
+        };
 
-        let (mut receiver, sender) = client.split().unwrap();
+        let client = match cb.connect_insecure() {
+            Ok(client) => client,
+            _ => return Err("Couldn't connect to server"),
+        };
+
+        let (mut receiver, sender) = match client.split() {
+            Ok(split) => split,
+            Err(_) => return Err("Error splitting client"),
+        };
+
         let (tx, rx) = mpsc::channel();
 
         // channel for requests callback.
@@ -49,7 +59,7 @@ impl Obs {
                     }
                 };
 
-                if let Text(m) = message {
+                if let Text(m) = &message {
                     let parsed_message: Value = serde_json::from_str(&m).unwrap();
 
                     if parsed_message["message-id"] != Value::Null {
@@ -60,6 +70,11 @@ impl Obs {
                     // to send back to main
                     tx.send(parsed_message.to_owned()).unwrap();
                     // println!("{}", parsed_message);
+                }
+
+                if let Close(e) = &message {
+                    // how should i handle reconnect
+                    print!("Got close message: {:?}", e);
                 }
             }
         });
@@ -79,7 +94,7 @@ impl Obs {
             println!("No authentication required");
         }
 
-        obs
+        Ok(obs)
     }
 
     pub fn send(&mut self, request: String, fields: Option<String>) -> serde_json::value::Value {
