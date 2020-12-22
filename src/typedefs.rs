@@ -30,6 +30,9 @@ pub struct SceneItem {
     pub source_cy: f64,
 
     #[serde(rename = "type")]
+    /// Source type. Value is one of the following:
+    /// "input", "filter", "transition", "scene" or "unknown".
+    /// There are actually more types.
     pub kind: String,
 
     pub volume: f64,
@@ -152,41 +155,33 @@ pub struct SceneItemTransform {
 }
 
 #[derive(Serialize, Deserialize, Debug)]
-#[serde(rename = "OBSStats")]
-pub struct Obsstats {
+#[serde(rename_all = "kebab-case")]
+pub struct ObsStats {
     /// Current framerate.
     pub fps: f64,
 
     /// Number of frames rendered
-    #[serde(rename = "render-total-frames")]
     pub render_total_frames: i32,
 
     /// Number of frames missed due to rendering lag
-    #[serde(rename = "render-missed-frames")]
     pub render_missed_frames: i32,
 
     /// Number of frames outputted
-    #[serde(rename = "output-total-frames")]
     pub output_total_frames: i32,
 
     /// Number of frames skipped due to encoding lag
-    #[serde(rename = "output-skipped-frames")]
     pub output_skipped_frames: i32,
 
     /// Average frame render time (in milliseconds)
-    #[serde(rename = "average-frame-time")]
     pub average_frame_time: f64,
 
     /// Current CPU usage (percentage)
-    #[serde(rename = "cpu-usage")]
     pub cpu_usage: f64,
 
     /// Current RAM usage (in megabytes)
-    #[serde(rename = "memory-usage")]
     pub memory_usage: f64,
 
     /// Free recording disk space (in megabytes)
-    #[serde(rename = "free-disk-space")]
     pub free_disk_space: f64,
 }
 
