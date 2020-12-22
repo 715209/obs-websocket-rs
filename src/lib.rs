@@ -1,4 +1,5 @@
 pub mod typedefs;
+pub mod events;
 
 #[cfg(test)]
 mod tests {
